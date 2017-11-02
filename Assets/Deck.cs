@@ -8,7 +8,9 @@ public class Deck : MonoBehaviour {
 	public static Deck deck;
 
 	Dictionary<string, List<Sprite>> cardSprites = new Dictionary<string, List<Sprite>>();
-	List<Card> cards;
+
+	[HideInInspector]
+	public List<Card> cards;
 
 	void Awake () {
 		deck = this;
@@ -16,8 +18,9 @@ public class Deck : MonoBehaviour {
 	}
 
 	void Start() {
-		CreateDeck ();
+		cards = CreateDeck ();
 		Shuffle ();
+		GetComponent<Prospector> ().DeckReady ();
 	}
 
 	Sprite loadCardSprite(string suit, string value) {
@@ -75,7 +78,8 @@ public class Deck : MonoBehaviour {
 		var newCards = new List<Card> ();
 		while (cards.Count != 0) {
 			int randomIndex = Random.Range (0, cards.Count);
-			newCards.Add(cards.Remove (randomIndex));
+			newCards.Add(cards[randomIndex]);
+			cards.RemoveAt (randomIndex);
 		}
 		cards = newCards;
 	}
