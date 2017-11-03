@@ -2,15 +2,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum CardState {
+	Table,
+	Draw,
+	Target,
+	Discarded
+}
+
 public class Card : MonoBehaviour {
 	Sprite cardSprite;
 	Sprite cardbackSprite;
 	string suit;
-	int rank; // From 0 (which is a 2) upwards to Ace
+
+	[HideInInspector]
+	public int rank; // From 0 (which is a 2) upwards to Ace
 
 	[HideInInspector]
 	public List<Card> coveredBy = new List<Card> ();
 
+	public CardState state = CardState.Table;
+
+	[HideInInspector]
 	public bool faceUp = false;
 
 	void Start () {
@@ -35,6 +47,14 @@ public class Card : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		int covered = coveredBy.Count;
+		foreach (var c in coveredBy) {
+			if (c.state != CardState.Table) {
+				covered--;
+			}
+		}
+		if (!faceUp && covered == 0 && state == CardState.Table) {
+			Flip ();
+		}
 	}
 }

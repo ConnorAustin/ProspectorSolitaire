@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Prospector : MonoBehaviour {
 	public Transform drawPile;
+	public Transform target;
+	int targetIndex;
+	int drawIndex;
 
 	void Start () {
 		
@@ -64,11 +67,39 @@ public class Prospector : MonoBehaviour {
 			c++;
 		}
 
+		// Target card
+		targetIndex = c;
+		cards [targetIndex].transform.position = target.position;
+		cards [targetIndex].Flip ();
+		cards [targetIndex].state = CardState.Target;
+		c++;
+
 		// Draw pile
+		drawIndex = c;
+		float drawPileXOffset = 0.0f;
 		while(c != cards.Count) {
-			cards [c].transform.position = drawPile.position;
+			drawPileXOffset += 0.01f;
+			cards [c].transform.position = new Vector3(drawPile.position.x + drawPileXOffset, drawPile.position.y, drawPile.transform.position.z);
+			cards [c].state = CardState.Draw;
+			cards [c].GetComponent<SpriteRenderer> ().sortingOrder = cards.Count - c;
 			c++;
 		}
+	}
+
+	bool AdjacentRanks(Card a, Card b) {
+		if (!a.faceUp || !b.faceUp) {
+			return false;
+		}
+
+		if (Mathf.Abs (a.rank - b.rank) == 1) {
+			return true;
+		}
+
+		if ((a.rank == 0 && b.rank == 12) || (a.rank == 12 && b.rank == 0)) {
+			return true;
+		}
+
+		return false;
 	}
 	
 	void Update () {
@@ -76,7 +107,30 @@ public class Prospector : MonoBehaviour {
 			var ray = Camera.main.ScreenPointToRay (Input.mousePosition);
 			RaycastHit hit;
 			if (Physics.Raycast (ray.origin, ray.direction, out hit, 2000.0f, LayerMask.GetMask ("Card"))) {
+				var cards = Deck.deck.cards;
 				Card card = hit.collider.gameObject.GetComponent<Card> ();
+				if (card.state == CardState.Draw) {
+					var newTarget = cards[drawIndex];
+
+					newTarget.state = CardState.Target;
+					newTarget.transform.position = target.position;
+					newTarget.Flip ();
+
+					cards [targetIndex].state = CardState.Discarded;
+					cards [targetIndex].transform.position = new Vector3 (9999, 9999, 9999);
+
+					targetIndex = drawIndex;
+					drawIndex++;
+				} else if (card.state == CardState.Table) {
+					if (AdjacentRanks (card, cards [targetIndex])) {
+						cards [targetIndex].state = CardState.Discarded;
+						cards [targetIndex].transform.position = new Vector3 (9999, 9999, 9999);
+						
+						targetIndex = cards.IndexOf (card);
+						card.transform.position = target.position;
+						cards [targetIndex].state = CardState.Target;
+					}
+				}
 			}
 		}
 	}
