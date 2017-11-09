@@ -1,12 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class Prospector : MonoBehaviour {
 	public Transform drawPile;
 	public Transform target;
 	public Text gameOverText;
+	public Text scoreText;
+
+	static int score = 0;
+	int run = 0;
 
 	int targetIndex;
 	int drawIndex;
@@ -110,7 +115,14 @@ public class Prospector : MonoBehaviour {
 			gameOverText.text = "You win :)";
 		} else {
 			gameOverText.text = "Game Over :(";
+			score = 0;
 		}
+
+		Invoke ("ReloadLevel", 3);
+	}
+
+	void ReloadLevel() {
+		SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 	}
 
 	void CheckGameOver() {
@@ -149,6 +161,8 @@ public class Prospector : MonoBehaviour {
 				var cards = Deck.deck.cards;
 				Card card = hit.collider.gameObject.GetComponent<Card> ();
 				if (card.state == CardState.Draw) {
+					run = 0;
+
 					var newTarget = cards[drawIndex];
 
 					newTarget.state = CardState.Target;
@@ -163,6 +177,10 @@ public class Prospector : MonoBehaviour {
 					CheckGameOver ();
 				} else if (card.state == CardState.Table) {
 					if (AdjacentRanks (card, cards [targetIndex])) {
+						run++;
+						score += run;
+						scoreText.text = "" + score;
+
 						cards [targetIndex].state = CardState.Discarded;
 						cards [targetIndex].transform.position = new Vector3 (9999, 9999, 9999);
 						
