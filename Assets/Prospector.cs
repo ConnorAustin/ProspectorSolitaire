@@ -1,10 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Prospector : MonoBehaviour {
 	public Transform drawPile;
 	public Transform target;
+	public Text gameOverText;
+
 	int targetIndex;
 	int drawIndex;
 
@@ -101,6 +104,42 @@ public class Prospector : MonoBehaviour {
 
 		return false;
 	}
+
+	void GameOver(bool won) {
+		if (won) {
+			gameOverText.text = "You win :)";
+		} else {
+			gameOverText.text = "Game Over :(";
+		}
+	}
+
+	void CheckGameOver() {
+		// If there are no cards on the table, you won
+		bool won = true;
+		foreach (Card c in Deck.deck.cards) {
+			if (c.state == CardState.Table) {
+				won = false;
+			}
+		}
+
+		if (won) {
+			GameOver (true);
+		}
+
+		// If there is a card still available to draw, the game isn't over
+		foreach (Card c in Deck.deck.cards) {
+			if (c.state == CardState.Draw)
+				return;
+		}
+
+		// Check if there is still a viable play
+		foreach (Card c in Deck.deck.cards) {
+			if (c.state == CardState.Table && c.faceUp && AdjacentRanks(c, Deck.deck.cards[targetIndex]))
+				return;
+		}
+
+		GameOver (false);
+	}
 	
 	void Update () {
 		if (Input.GetMouseButtonDown (0)) {
@@ -121,6 +160,7 @@ public class Prospector : MonoBehaviour {
 
 					targetIndex = drawIndex;
 					drawIndex++;
+					CheckGameOver ();
 				} else if (card.state == CardState.Table) {
 					if (AdjacentRanks (card, cards [targetIndex])) {
 						cards [targetIndex].state = CardState.Discarded;
@@ -129,6 +169,7 @@ public class Prospector : MonoBehaviour {
 						targetIndex = cards.IndexOf (card);
 						card.transform.position = target.position;
 						cards [targetIndex].state = CardState.Target;
+						CheckGameOver ();
 					}
 				}
 			}
